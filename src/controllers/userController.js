@@ -1,3 +1,4 @@
+import { sendVerificationEmail } from "../mailtrap/emails.js";
 import User from "../model/UserModel.js";
 import { genrateTokenAndSetToken } from "../utils/token.js";
 import { sendResponse, getHashPassword } from "../utils/utils.js";
@@ -42,6 +43,8 @@ export const handleRegisterUser = async (req, res) => {
     await newUser.save();
 
     genrateTokenAndSetToken(res, newUser._id, newUser.role);
+
+    await sendVerificationEmail(newUser.email, verificationToken);
 
     const user = {
       ...newUser._doc,

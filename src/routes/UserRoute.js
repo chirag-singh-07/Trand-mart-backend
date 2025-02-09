@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  handleCheckAuth,
   handleForgotPassword,
   handleLoginUser,
   handleLogoutUser,
@@ -7,8 +8,11 @@ import {
   handleResetPassword,
   handleVerifyEmail,
 } from "../controllers/userController.js";
+import verifyToken from "../middleware/verifyToken.js";
 
 const router = express.Router();
+
+router.get("/check-auth", verifyToken, handleCheckAuth);
 
 router.post("/register", handleRegisterUser);
 router.post("/login", handleLoginUser);

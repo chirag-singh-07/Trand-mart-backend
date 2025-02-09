@@ -13,6 +13,30 @@ import {
 import { generateVerificationCode } from "../utils/verification.js";
 import crypto from "crypto";
 
+
+
+
+export const handleCheckAuth = async (req, res) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return sendResponse(res, 401, false, "Unauthorized", null);
+    }
+    const user = await User.findById(userId).select("-password");
+
+    if (!user) {
+      return sendResponse(res, 401, false, "Unauthorized", null);
+    }
+
+    return sendResponse(res, 200, true, "User authenticated", user);
+  } catch (error) {
+    console.error(error);
+    return sendResponse(res, 500, false, "Internal server error", null);
+  }
+};
+
+
+
 export const handleRegisterUser = async (req, res) => {
   // Your code here
   try {
@@ -67,6 +91,8 @@ export const handleRegisterUser = async (req, res) => {
   }
 };
 
+
+
 export const handleVerifyEmail = async (req, res) => {
   const { code } = req.body;
 
@@ -104,12 +130,14 @@ export const handleVerifyEmail = async (req, res) => {
   }
 };
 
+
+
 export const handleLoginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
     if (!email || !password) {
-      return sendResponse(res, 400, false, "Missing required fields", null);
+      return sendResponse(res, 400, false, "Missing required field", null);
     }
 
     if (password.length < 6) {
@@ -156,6 +184,8 @@ export const handleLoginUser = async (req, res) => {
   }
 };
 
+
+
 export const handleLogoutUser = async (req, res) => {
   try {
     res.clearCookie("token");
@@ -165,6 +195,8 @@ export const handleLogoutUser = async (req, res) => {
     return sendResponse(res, 500, false, "Internal server error", null);
   }
 };
+
+
 
 export const handleForgotPassword = async (req, res) => {
   const { email } = req.body;
@@ -202,6 +234,7 @@ export const handleForgotPassword = async (req, res) => {
     return sendResponse(res, 500, false, "Internal server error", null);
   }
 };
+
 
 export const handleResetPassword = async (req, res) => {
   try {

@@ -43,7 +43,7 @@ export const sendVerificationEmail = async (email, verificationToken) => {
     };
 
     await EmailTransporter.sendMail(mailOptions);
-    console.log(`Verification email sent to ${email}`);
+    // console.log(`Verification email sent to ${email}`);
     return true;
   } catch (error) {
     console.error("Email send error:", error);
@@ -65,7 +65,7 @@ export const sendWelcomeEmail = async (email, username) => {
     };
 
     await EmailTransporter.sendMail(mailOptions);
-    console.log(`Welcome email sent to ${email}`);
+    // console.log(`Welcome email sent to ${email}`);
     return true;
   } catch (error) {
     console.error("Email send error:", error);
@@ -83,7 +83,7 @@ export const sendPasswordResetEmail = async (email, resetURL) => {
       category: "Password Reset",
     };
     await EmailTransporter.sendMail(mailOptions);
-    console.log(`Welcome email sent to ${email}`);
+    // console.log(`Welcome email sent to ${email}`);
     return true;
   } catch (error) {
     console.error("Error sending forgot password email", error);
@@ -107,7 +107,7 @@ export const sendResetSuccessEmail = async (email) => {
       category: "Password Reset",
     };
     await EmailTransporter.sendMail(mailOptions);
-    console.log(`Password reset success email sent to ${email}`);
+    // console.log(`Password reset success email sent to ${email}`);
     return true;
   } catch (error) {
     console.error("Error sending password reset success email", error);

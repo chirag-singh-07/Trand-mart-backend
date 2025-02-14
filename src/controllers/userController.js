@@ -3,7 +3,7 @@ import {
   sendVerificationEmail,
   sendWelcomeEmail,
 } from "../mailtrap/emails.js";
-import User from "../model/UserModel.js";
+import User from "../model/userModel.js";
 import { genrateTokenAndSetToken } from "../utils/token.js";
 import {
   sendResponse,
@@ -12,9 +12,6 @@ import {
 } from "../utils/utils.js";
 import { generateVerificationCode } from "../utils/verification.js";
 import crypto from "crypto";
-
-
-
 
 export const handleCheckAuth = async (req, res) => {
   try {
@@ -34,8 +31,6 @@ export const handleCheckAuth = async (req, res) => {
     return sendResponse(res, 500, false, "Internal server error", null);
   }
 };
-
-
 
 export const handleRegisterUser = async (req, res) => {
   // Your code here
@@ -91,10 +86,9 @@ export const handleRegisterUser = async (req, res) => {
   }
 };
 
-
-
 export const handleVerifyEmail = async (req, res) => {
   const { code } = req.body;
+  console.log("code", code);
 
   try {
     if (!code) {
@@ -129,8 +123,6 @@ export const handleVerifyEmail = async (req, res) => {
     return sendResponse(res, 500, false, "Internal server error", null);
   }
 };
-
-
 
 export const handleLoginUser = async (req, res) => {
   const { email, password } = req.body;
@@ -184,8 +176,6 @@ export const handleLoginUser = async (req, res) => {
   }
 };
 
-
-
 export const handleLogoutUser = async (req, res) => {
   try {
     res.clearCookie("token");
@@ -195,8 +185,6 @@ export const handleLogoutUser = async (req, res) => {
     return sendResponse(res, 500, false, "Internal server error", null);
   }
 };
-
-
 
 export const handleForgotPassword = async (req, res) => {
   const { email } = req.body;
@@ -234,7 +222,6 @@ export const handleForgotPassword = async (req, res) => {
     return sendResponse(res, 500, false, "Internal server error", null);
   }
 };
-
 
 export const handleResetPassword = async (req, res) => {
   try {

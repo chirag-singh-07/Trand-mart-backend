@@ -2,12 +2,14 @@ import jwt from "jsonwebtoken";
 
 const verifyToken = (req, res, next) => {
   try {
-    const token = req.cookies.token || req.headers["x-access-token"] || " ";
+    const token = req.cookies.token || req.headers["x-access-token"];
+
     if (!token) {
       return res
         .status(401)
         .json({ message: "Access denied. No token provided." });
     }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     if (!decoded) {

@@ -1,5 +1,6 @@
 import {
   sendPasswordResetEmail,
+  sendResetSuccessEmail,
   sendVerificationEmail,
   sendWelcomeEmail,
 } from "../mailtrap/emails.js";
@@ -225,10 +226,10 @@ export const handleForgotPassword = async (req, res) => {
 
 export const handleResetPassword = async (req, res) => {
   try {
-    const { token } = req.parms;
-    const { password } = req.body;
+    const { token } = req.params;
+    const { newPassword } = req.body;
 
-    if (!token || !password) {
+    if (!token || !newPassword) {
       return sendResponse(res, 400, false, "Missing required fields", null);
     }
     const user = await User.findOne({
@@ -245,7 +246,7 @@ export const handleResetPassword = async (req, res) => {
       );
     }
 
-    if (password.length < 6) {
+    if (newPassword.length < 6) {
       return sendResponse(
         res,
         400,
@@ -255,7 +256,7 @@ export const handleResetPassword = async (req, res) => {
       );
     }
 
-    const hashedPassword = getHashPassword(password);
+    const hashedPassword = getHashPassword(newPassword);
     user.password = hashedPassword;
     user.resetPasswordToken = undefined;
     user.resetPasswordTokenExpiresAt = undefined;

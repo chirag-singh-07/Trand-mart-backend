@@ -5,6 +5,7 @@ import {
   sendWelcomeEmail,
 } from "../mailtrap/emails.js";
 import Seller from "../model/sellerModel.js";
+import { genrateTokenAndSetToken } from "../utils/token.js";
 import {
   comparePassword,
   getHashPassword,
@@ -68,7 +69,7 @@ export const handleRegisterSeller = async (req, res) => {
       return sendResponse(res, 400, false, "Invalid email format");
     }
 
-    if (password < 6) {
+    if (password.length < 6) {
       return sendResponse(
         res,
         400,
@@ -87,12 +88,13 @@ export const handleRegisterSeller = async (req, res) => {
     const verificationToken = generateVerificationCode();
 
     const newSeller = new Seller({
-      name: fullName,
+      fullName,
       email,
       password: hashedPassword,
       verificationToken,
-      verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 100, // 24 hour
+      verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hour
     });
+
 
     await newSeller.save();
 
@@ -101,7 +103,7 @@ export const handleRegisterSeller = async (req, res) => {
     await sendVerificationEmail(newSeller.email, verificationToken);
 
     const seller = {
-      ...newSeller,
+      ...newSeller._doc,
       password: undefined,
       verificationToken: undefined,
       verificationTokenExpiresAt: undefined,
@@ -122,7 +124,7 @@ export const handleLoginSeller = async (req, res) => {
       return sendResponse(res, 400, false, "Please provide email and password");
     }
 
-    if (password < 6) {
+    if (password.length < 6) {
       return sendResponse(
         res,
         400,
@@ -161,7 +163,6 @@ export const handleLoginSeller = async (req, res) => {
       verificationTokenExpiresAt: undefined,
     };
 
-    await seller.save();
 
     return sendResponse(
       res,

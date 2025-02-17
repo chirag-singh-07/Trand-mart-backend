@@ -5,7 +5,7 @@ import cors from "cors";
 
 import connectDB from "./config/database.js";
 import UserRoute from "./routes/UserRoute.js";
-import SelletRoute from "./routes/SellertRoute.js";
+import SelletRoute from "./routes/SellerRoute.js";
 import AdminRoute from "./routes/AdminRoute.js";
 dotenv.config();
 const app = express();

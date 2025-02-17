@@ -4,7 +4,7 @@ const SellerSchema = new mongoose.Schema(
   {
     fullName: {
       type: String,
-      required: true,
+      // required: true,
     },
     email: {
       type: String,
@@ -17,7 +17,6 @@ const SellerSchema = new mongoose.Schema(
     },
     storeName: {
       type: String,
-      required: true,
     },
     profilePic: {
       type: String,

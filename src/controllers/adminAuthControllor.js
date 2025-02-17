@@ -1,4 +1,5 @@
 import Admin from "../model/AdminModel.js";
+import { genrateTokenAndSetToken } from "../utils/token.js";
 import {
   comparePassword,
   getHashPassword,
@@ -6,7 +7,7 @@ import {
 } from "../utils/utils.js";
 
 export const handleVerifyCheckAuthAdmin = async (req, res) => {
-  const { userId } = req.userId;
+  const userId = req.userId; // Directly access it instead of destructuring
 
   try {
     if (!userId) {
@@ -38,7 +39,7 @@ export const handleRegsiterAdmin = async (req, res) => {
       );
     }
 
-    if (password < 6) {
+    if (password.length < 6) {
       return sendResponse(
         res,
         400,
@@ -60,6 +61,8 @@ export const handleRegsiterAdmin = async (req, res) => {
       email,
       password: hashedPassword,
     });
+
+    genrateTokenAndSetToken(res, newAdmin._id);
 
     await newAdmin.save();
 
@@ -83,7 +86,7 @@ export const handleLoginAdmin = async (req, res) => {
       );
     }
 
-    if (password < 6) {
+    if (password.length < 6) {
       return sendResponse(
         res,
         400,
@@ -105,14 +108,14 @@ export const handleLoginAdmin = async (req, res) => {
 
     genrateTokenAndSetToken(res, admin._id);
 
-    const newAdmin = {
-      ...admin._doc,
-      password: null,
-    };
-
-    await admin.save();
-
-    sendResponse(res, 200, true, "Admin user logged in successfully", newAdmin);
+    const { password, ...adminData } = admin._doc;
+    sendResponse(
+      res,
+      200,
+      true,
+      "Admin user logged in successfully",
+      adminData
+    );
   } catch (error) {
     console.error(error.message);
     sendResponse(res, 500, false, "Server error on the login");
@@ -121,7 +124,11 @@ export const handleLoginAdmin = async (req, res) => {
 
 export const handleLogoutAdmin = async (req, res) => {
   try {
-    res.clearCookie("token");
+    res.clearCookie("token", {
+      httpOnly: true,
+      sameSite: "strict",
+    });
+
     sendResponse(res, 200, true, "Admin user logged out successfully");
   } catch (error) {
     console.error(error.message);

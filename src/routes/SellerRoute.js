@@ -9,13 +9,15 @@ import {
   handleResetPasswordSeller,
   handleVerifyEmailSeller,
 } from "../controllers/sellerAuthController.js";
+import { loginLimiter } from "../utils/utils.js";
+
 
 const router = Router();
 
 router.get("/auth/check-auth", verifyToken, handleCheckAuthSeller);
 
 router.post("/auth/register", handleRegisterSeller);
-router.post("/auth/login", handleLoginSeller);
+router.post("/auth/login",loginLimiter, handleLoginSeller);
 router.post("/auth/logout", handleLogoutSeller);
 router.post("/auth/verify-email", handleVerifyEmailSeller);
 router.post("/auth/forgot-password", handleForgotPasswordSeller);

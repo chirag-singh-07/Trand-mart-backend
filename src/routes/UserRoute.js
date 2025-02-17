@@ -9,13 +9,14 @@ import {
   handleVerifyEmailUser,
 } from "../controllers/userAuthController.js";
 import verifyToken from "../middleware/verifyToken.js";
+import { loginLimiter } from "../utils/utils.js";
 
 const router = express.Router();
 
 router.get("/auth/check-auth", verifyToken, handleCheckAuth);
 
 router.post("/auth/register", handleRegisterUser);
-router.post("/auth/login", handleLoginUser);
+router.post("/auth/login", loginLimiter, handleLoginUser);
 router.post("/auth/logout", handleLogoutUser);
 router.post("/auth/verify-email", handleVerifyEmailUser);
 router.post("/auth/forgot-password", handleForgotPasswordUser);

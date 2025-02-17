@@ -5,7 +5,7 @@ import cors from "cors";
 
 import connectDB from "./config/database.js";
 import UserRoute from "./routes/UserRoute.js";
-import SelletRoute from "./routes/SelletRoute.js";
+import SelletRoute from "./routes/SellertRoute.js";
 import AdminRoute from "./routes/AdminRoute.js";
 dotenv.config();
 const app = express();
@@ -39,13 +39,6 @@ app.get("/health", (req, res) => {
 app.use("/api/user", UserRoute);
 app.use("/api/seller", SelletRoute);
 app.use("/api/admin", AdminRoute);
-// Handle 404 errors
-
-app.use((req, res, next) => {
-  const error = new Error("Not Found");
-  error.status = 404;
-  next(error);
-});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

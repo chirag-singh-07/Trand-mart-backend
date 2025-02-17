@@ -29,11 +29,21 @@ app.use(
 );
 app.use(express.json());
 app.use(cookiePaeaser());
-app.get("/", (req, res) => {
+
+app.get("/health", (req, res) => {
   res.send("Hello, World!");
 });
 
-app.use("/api/user/auth", UserRoute);
+app.use("/api/user", UserRoute);
+app.use("/api/seller", SelletRoute);
+app.use("/api/admin", AdminRoute);
+// Handle 404 errors
+
+app.use((req, res, next) => {
+  const error = new Error("Not Found");
+  error.status = 404;
+  next(error);
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

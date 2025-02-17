@@ -1,24 +1,24 @@
 import express from "express";
 import {
   handleCheckAuth,
-  handleForgotPassword,
+  handleForgotPasswordUser,
   handleLoginUser,
   handleLogoutUser,
   handleRegisterUser,
-  handleResetPassword,
-  handleVerifyEmail,
-} from "../controllers/userController.js";
+  handleResetPasswordUser,
+  handleVerifyEmailUser,
+} from "../controllers/userAuthController.js";
 import verifyToken from "../middleware/verifyToken.js";
 
 const router = express.Router();
 
-router.get("/check-auth", verifyToken, handleCheckAuth);
+router.get("/auth/check-auth", verifyToken, handleCheckAuth);
 
-router.post("/register", handleRegisterUser);
-router.post("/login", handleLoginUser);
-router.post("/logout", handleLogoutUser);
-router.post("/verify-email", handleVerifyEmail);
-router.post("/forgot-password", handleForgotPassword);
-router.post("/reset-password/:token", handleResetPassword);
+router.post("/auth/register", handleRegisterUser);
+router.post("/auth/login", handleLoginUser);
+router.post("/auth/logout", handleLogoutUser);
+router.post("/auth/verify-email", handleVerifyEmailUser);
+router.post("/auth/forgot-password", handleForgotPasswordUser);
+router.post("/auth/reset-password/:token", handleResetPasswordUser);
 
 export default router;

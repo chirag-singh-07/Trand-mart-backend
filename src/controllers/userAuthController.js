@@ -87,7 +87,7 @@ export const handleRegisterUser = async (req, res) => {
   }
 };
 
-export const handleVerifyEmail = async (req, res) => {
+export const handleVerifyEmailUser = async (req, res) => {
   const { code } = req.body;
   console.log("code", code);
 
@@ -187,7 +187,7 @@ export const handleLogoutUser = async (req, res) => {
   }
 };
 
-export const handleForgotPassword = async (req, res) => {
+export const handleForgotPasswordUser = async (req, res) => {
   const { email } = req.body;
 
   try {
@@ -206,7 +206,7 @@ export const handleForgotPassword = async (req, res) => {
     user.resetPasswordToken = resetToken;
     user.resetPasswordTokenExpiresAt = resetTokenExpiresAt;
 
-    const url = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+    const url = `${process.env.CLIENT_URL_USER}/reset-password/${resetToken}`;
     await sendPasswordResetEmail(user.email, url);
 
     await user.save();
@@ -224,7 +224,7 @@ export const handleForgotPassword = async (req, res) => {
   }
 };
 
-export const handleResetPassword = async (req, res) => {
+export const handleResetPasswordUser = async (req, res) => {
   try {
     const { token } = req.params;
     const { newPassword } = req.body;

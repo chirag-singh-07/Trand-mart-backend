@@ -98,7 +98,7 @@ export const handleRegisterSeller = async (req, res) => {
 
     await newSeller.save();
 
-    genrateTokenAndSetToken(res, newSeller._id);
+    genrateTokenAndSetToken(res, newSeller._id,newSeller.role);
 
     await sendVerificationEmail(newSeller.email, verificationToken);
 

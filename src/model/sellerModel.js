@@ -47,6 +47,11 @@ const SellerSchema = new mongoose.Schema(
       type: Boolean,
       default: false, // Admin can verify the seller
     },
+    role: {
+      type: String,
+      enum: ["admin", "seller", "customer"],
+      default: "seller",
+    },
     resetPasswordToken: String,
     resetPasswordTokenExpiresAt: Date,
     verificationToken: String,

@@ -13,9 +13,11 @@ const PORT = process.env.PORT || 5000;
 
 connectDB();
 const allowedOrigins = [
-  "http://localhost:5173", // Local dev
-  "http://localhost:3000",
+  "http://localhost:5173", // Local dev for seller fronetnd
+  "http://localhost:3000", // Local dev for user fronetnd
+  "http://localhost:4000", // local dev for admin frontend
   "https://trendmart-buyers.netlify.app", // Deployed frontend
+  "https://trendmart-vendors.netlify.app", // Deloyed seller frontend
 ];
 
 app.use(

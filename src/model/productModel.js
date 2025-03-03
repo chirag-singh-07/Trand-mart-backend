@@ -18,11 +18,14 @@ const ProductSchema = new mongoose.Schema(
     brand: { type: String },
     totalStock: { type: Number, required: true },
     image: { type: String, required: true },
-    seller: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Seller",
-      required: true,
-    }, // Linked to Seller
+    addedBy: {
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        refPath: "addedBy.role",
+      },
+      role: { type: String, enum: ["admin", "seller"], required: true },
+    },
     ratings: [
       {
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
@@ -35,6 +38,20 @@ const ProductSchema = new mongoose.Schema(
         createdAt: { type: Date, default: Date.now },
       },
     ],
+    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    isFeature: {
+      type: Boolean,
+      default: false,
+    },
+    isBestSeller: {
+      type: Boolean,
+      default: false,
+    },
+    isTrending: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

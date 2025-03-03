@@ -1,4 +1,4 @@
-
+import { imageUploadUitls } from "../config/cloundinary.js";
 import Product from "../model/productModel.js";
 import {
   // comparePassword,
@@ -16,6 +16,26 @@ export const handleGetProducts = async (req, res) => {
   }
 };
 
+export const handleImageUpload = async (req, res) => {
+  try {
+    if (!req.file) {
+      return sendResponse(res, 400, false, "No files were uploaded.");
+    }
+
+    const base64 = Buffer.from(req.file.buffer).toString("base64");
+    const url = `data:${req.file.mimetype};base64,${base64}`;
+
+    const uploadResponse = await imageUploadUitls(url); // Renamed from `res` to `uploadResponse`
+
+    sendResponse(res, 200, true, "Image uploaded successfully", {
+      imageUrl: uploadResponse.url, // Use the correct response variable
+    });
+  } catch (error) {
+    console.error(error);
+    sendResponse(res, 500, false, "Error uploading image");
+  }
+};
+
 export const handleAddProducts = async (req, res) => {
   try {
     const {
@@ -30,12 +50,12 @@ export const handleAddProducts = async (req, res) => {
     } = req.body;
 
     // Ensure the user is a seller
-    if (!req.userId || req.role !== "seller") {
+    if (!req.userId || (req.role !== "seller" && req.role !== "admin")) {
       return sendResponse(
         res,
         403,
         false,
-        "Unauthorized! Only sellers can add products."
+        "Unauthorized! Only sellers and Admin can add products."
       );
     }
 
@@ -91,7 +111,10 @@ export const handleAddProducts = async (req, res) => {
       brand,
       totalStock,
       image,
-      seller: req.userId, // Attach seller ID
+      addedBy: {
+        id: req.userId, // Auto-fill userId from token
+        role: req.role, // Auto-fill role from token
+      },
     });
 
     return sendResponse(
@@ -121,13 +144,13 @@ export const handleUpdateProducts = async (req, res) => {
       image,
     } = req.body;
 
-    // Ensure the user is a seller
-    if (!req.userId || req.role !== "seller") {
+    // Ensure the user is either a seller or an admin
+    if (!req.userId || (req.role !== "seller" && req.role !== "admin")) {
       return sendResponse(
         res,
         403,
         false,
-        "Unauthorized! Only sellers can update products."
+        "Unauthorized! Only sellers and Admin can update products."
       );
     }
 
@@ -137,8 +160,8 @@ export const handleUpdateProducts = async (req, res) => {
       return sendResponse(res, 404, false, "Product not found!");
     }
 
-    // Ensure the seller updating the product is the owner
-    if (product.seller.toString() !== req.userId) {
+    // Ensure only the seller can update their own product, but admin can update any product
+    if (req.role === "seller" && product.seller.toString() !== req.userId) {
       return sendResponse(
         res,
         403,
@@ -182,7 +205,7 @@ export const handleDeleteProducts = async (req, res) => {
     const { productId } = req.params;
 
     // Ensure the user is a seller
-    if (!req.userId || req.role !== "seller") {
+    if (!req.userId || (req.role !== "seller" && req.role !== "admin")) {
       return sendResponse(
         res,
         403,
@@ -224,22 +247,30 @@ export const handleDeleteProducts = async (req, res) => {
 
 export const handleGetSellerProducts = async (req, res) => {
   try {
-    const sellerId = req.userId; // Assuming `verifyToken` middleware sets `req.userId`
+    const { sellerId } = req.params; // Get seller ID from the request params (URL)
 
-    if (!sellerId) {
-      return sendResponse(res, 400, false, "Seller ID is required!");
-    }
-
-    const products = await Product.find({ seller: sellerId });
-
-    if (!products.length) {
+    // If the requester is a seller, they should only access their own products
+    if (req.role === "seller" && req.userId !== sellerId) {
       return sendResponse(
         res,
-        404,
+        403,
         false,
-        "No products found for this seller!"
+        "Unauthorized! You can only view your own products."
       );
     }
+
+    // Ensure the user is a seller or an admin
+    if (!req.userId || (req.role !== "seller" && req.role !== "admin")) {
+      return sendResponse(
+        res,
+        403,
+        false,
+        "Unauthorized! Only sellers and Admins can view seller products."
+      );
+    }
+
+    // Fetch products of the specific seller
+    const products = await Product.find({ "addedBy.id": sellerId });
 
     return sendResponse(
       res,

@@ -108,7 +108,10 @@ export const handleLoginAdmin = async (req, res) => {
 
     genrateTokenAndSetToken(res, admin._id);
 
-    const { password, ...adminData } = admin._doc;
+    const adminData = {
+      ...admin._doc,
+      password: null,
+    };
     sendResponse(
       res,
       200,

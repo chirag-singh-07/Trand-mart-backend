@@ -15,6 +15,11 @@ const AdminSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    role: {
+      type: String,
+      enum: ["admin", "seller", "customer"],
+      default: "admin",
+    },
   },
   {
     timestamps: true,

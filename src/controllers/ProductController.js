@@ -8,7 +8,71 @@ import {
 
 export const handleGetProducts = async (req, res) => {
   try {
-    const products = await Product.find({});
+    const queryParams = Object.keys(req.query).reduce((acc, key) => {
+      acc[key.toLowerCase()] = req.query[key]; // Convert all keys to lowercase
+      return acc;
+    }, {});
+    const { category, brand, sortby } = queryParams;
+
+    // console.log("Received Query Params:", queryParams);
+
+    const filterQuery = {};
+
+    // Fix: Use $in for multiple categories instead of regex
+    if (category) {
+      const categories = category
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean);
+      if (categories.length) {
+        filterQuery.category = {
+          $regex: new RegExp(`^(${categories.join("|")})$`, "i"), // Fix: Case-insensitive
+        };
+      }
+    }
+
+    if (brand) {
+      const brands = brand
+        .split(",")
+        .map((b) => b.trim())
+        .filter(Boolean);
+      if (brands.length) {
+        filterQuery.brand = { $regex: new RegExp(brands.join("|"), "i") };
+      }
+    }
+
+    const sort = {};
+    const sortByNumber = parseInt(sortby, 10);
+
+    switch (sortByNumber) {
+      case 1:
+        sort.price = 1;
+        break;
+      case 2:
+        sort.price = -1;
+        break;
+      case 3:
+        sort.rating = -1;
+        break;
+      case 4:
+        sort.rating = 1;
+        break;
+      default:
+        sort.title = 1;
+        break;
+    }
+
+    // console.log(
+    //   "Final filterQuery:",
+    //   JSON.stringify(filterQuery),
+    //   "Sorting:",
+    //   JSON.stringify(sort)
+    // );
+
+    // console.log("Executing MongoDB Query:", JSON.stringify(filterQuery));
+
+    const products = await Product.find(filterQuery).sort(sort);
+
     sendResponse(res, 200, true, "Products fetched successfully", products);
   } catch (error) {
     console.error(error);
@@ -204,13 +268,13 @@ export const handleDeleteProducts = async (req, res) => {
   try {
     const { productId } = req.params;
 
-    // Ensure the user is a seller
+    // Ensure the user is authenticated
     if (!req.userId || (req.role !== "seller" && req.role !== "admin")) {
       return sendResponse(
         res,
         403,
         false,
-        "Unauthorized! Only sellers can delete products."
+        "Unauthorized! Only sellers and admins can delete products."
       );
     }
 
@@ -220,8 +284,24 @@ export const handleDeleteProducts = async (req, res) => {
       return sendResponse(res, 404, false, "Product not found!");
     }
 
-    // Ensure the seller deleting the product is the owner
-    if (product.seller.toString() !== req.userId) {
+    // Ensure `addedBy` exists before checking its fields
+    if (!product.addedBy || !product.addedBy.id) {
+      return sendResponse(
+        res,
+        500,
+        false,
+        "Invalid product data! Missing owner information."
+      );
+    }
+
+    // Allow admins to delete any product
+    if (req.role === "admin") {
+      await Product.findByIdAndDelete(productId);
+      return sendResponse(res, 200, true, "Product deleted successfully!");
+    }
+
+    // Allow sellers to delete only their own products
+    if (req.role === "seller" && product.addedBy.id.toString() !== req.userId) {
       return sendResponse(
         res,
         403,
@@ -230,9 +310,8 @@ export const handleDeleteProducts = async (req, res) => {
       );
     }
 
-    // Use findByIdAndDelete instead of remove()
+    // Delete the product
     await Product.findByIdAndDelete(productId);
-
     return sendResponse(res, 200, true, "Product deleted successfully!");
   } catch (error) {
     console.error("Error in handleDeleteProducts:", error.message);
@@ -286,6 +365,34 @@ export const handleGetSellerProducts = async (req, res) => {
       500,
       false,
       "Server error while fetching seller products!"
+    );
+  }
+};
+
+export const handleGetProductDetialsById = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    if (!productId) {
+      return sendResponse(res, 400, false, "Product ID is required!");
+    }
+    const product = await Product.findById(productId);
+    if (!product) {
+      return sendResponse(res, 404, false, "Product not found!");
+    }
+    return sendResponse(
+      res,
+      200,
+      true,
+      "Product details retrieved successfully!",
+      product
+    );
+  } catch (error) {
+    console.error("Error fetching product details:", error.message);
+    return sendResponse(
+      res,
+      500,
+      false,
+      "Server error while fetching product details!"
     );
   }
 };

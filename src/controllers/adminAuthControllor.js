@@ -62,7 +62,7 @@ export const handleRegsiterAdmin = async (req, res) => {
       password: hashedPassword,
     });
 
-    genrateTokenAndSetToken(res, newAdmin._id);
+    genrateTokenAndSetToken(res, newAdmin._id, newAdmin.role);
 
     await newAdmin.save();
 
@@ -106,7 +106,7 @@ export const handleLoginAdmin = async (req, res) => {
       return sendResponse(res, 401, false, "Invalid credentials or password");
     }
 
-    genrateTokenAndSetToken(res, admin._id);
+    genrateTokenAndSetToken(res, admin._id, admin.role);
 
     const adminData = {
       ...admin._doc,

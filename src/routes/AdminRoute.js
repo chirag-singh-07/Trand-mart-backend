@@ -10,6 +10,8 @@ import { loginLimiter } from "../utils/utils.js";
 import { upload } from "../config/cloundinary.js";
 import {
   handleAddProducts,
+  handleDeleteProducts,
+  handleGetProductDetialsById,
   handleGetProducts,
   handleImageUpload,
   handleUpdateProducts,
@@ -30,7 +32,8 @@ router.post(
 );
 router.post("/product/add", verifyToken, handleAddProducts);
 router.put("/product/edit/:productId", verifyToken, handleUpdateProducts);
-router.delete("/product/delete/:productId", verifyToken, handleAddProducts);
+router.delete("/product/delete/:productId", verifyToken, handleDeleteProducts);
 router.get("/product/all-products", verifyToken, handleGetProducts);
+router.get("/product/:productId", handleGetProductDetialsById);
 
 export default router;

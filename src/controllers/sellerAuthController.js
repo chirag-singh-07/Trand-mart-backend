@@ -95,10 +95,9 @@ export const handleRegisterSeller = async (req, res) => {
       verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hour
     });
 
-
     await newSeller.save();
 
-    genrateTokenAndSetToken(res, newSeller._id,newSeller.role);
+    genrateTokenAndSetToken(res, newSeller._id, newSeller.role);
 
     await sendVerificationEmail(newSeller.email, verificationToken);
 
@@ -154,7 +153,7 @@ export const handleLoginSeller = async (req, res) => {
       return sendResponse(res, 401, false, "Incorrect password");
     }
 
-    genrateTokenAndSetToken(res, seller._id);
+    genrateTokenAndSetToken(res, seller._id, seller.role);
 
     const newSeller = {
       ...seller._doc,
@@ -162,7 +161,6 @@ export const handleLoginSeller = async (req, res) => {
       verificationToken: undefined,
       verificationTokenExpiresAt: undefined,
     };
-
 
     return sendResponse(
       res,

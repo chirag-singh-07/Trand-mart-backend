@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { imageUploadUitls } from "../config/cloundinary.js";
 import Product from "../model/productModel.js";
 import {
@@ -111,7 +112,12 @@ export const handleAddProducts = async (req, res) => {
       brand,
       totalStock,
       image,
+      isFeature,
+      isBestSeller,
+      isTrending,
     } = req.body;
+
+    // console.log("req.userId ", req.userId, "req.role ", req.role);
 
     // Ensure the user is a seller
     if (!req.userId || (req.role !== "seller" && req.role !== "admin")) {
@@ -175,6 +181,9 @@ export const handleAddProducts = async (req, res) => {
       brand,
       totalStock,
       image,
+      isFeature: isFeature !== undefined ? isFeature : false,
+      isBestSeller: isBestSeller !== undefined ? isBestSeller : false,
+      isTrending: isTrending !== undefined ? isTrending : false,
       addedBy: {
         id: req.userId, // Auto-fill userId from token
         role: req.role, // Auto-fill role from token
@@ -206,6 +215,9 @@ export const handleUpdateProducts = async (req, res) => {
       brand,
       totalStock,
       image,
+      isFeature,
+      isBestSeller,
+      isTrending,
     } = req.body;
 
     // Ensure the user is either a seller or an admin
@@ -214,7 +226,7 @@ export const handleUpdateProducts = async (req, res) => {
         res,
         403,
         false,
-        "Unauthorized! Only sellers and Admin can update products."
+        "Unauthorized! Only sellers and admins can update products."
       );
     }
 
@@ -224,8 +236,18 @@ export const handleUpdateProducts = async (req, res) => {
       return sendResponse(res, 404, false, "Product not found!");
     }
 
-    // Ensure only the seller can update their own product, but admin can update any product
-    if (req.role === "seller" && product.seller.toString() !== req.userId) {
+    // Ensure `addedBy` exists before checking fields
+    if (!product.addedBy || !product.addedBy.id) {
+      return sendResponse(
+        res,
+        500,
+        false,
+        "Invalid product data! Missing owner information."
+      );
+    }
+
+    // Ensure only the seller can update their own product (admins can update any)
+    if (req.role === "seller" && product.addedBy.id.toString() !== req.userId) {
       return sendResponse(
         res,
         403,
@@ -234,16 +256,35 @@ export const handleUpdateProducts = async (req, res) => {
       );
     }
 
-    // Update product fields if they are provided in req.body
-    product.title = title || product.title;
-    product.price = price || product.price;
-    product.description = description || product.description;
-    product.category = category || product.category;
-    product.salePrice = salePrice !== undefined ? salePrice : product.salePrice; // Only update salePrice if provided
-    product.brand = brand || product.brand;
-    product.totalStock = totalStock || product.totalStock;
-    product.image = image || product.image;
+    // Validate price and salePrice before updating
+    if (price !== undefined && price < 0) {
+      return sendResponse(res, 400, false, "Price must be a positive number!");
+    }
+    if (salePrice !== undefined && salePrice < 0) {
+      return sendResponse(
+        res,
+        400,
+        false,
+        "Sale price must be a positive number!"
+      );
+    }
 
+    // Update product fields only if provided
+    product.title = title ?? product.title;
+    product.price = price ?? product.price;
+    product.description = description ?? product.description;
+    product.category = category ?? product.category;
+    product.salePrice = salePrice ?? product.salePrice;
+    product.brand = brand ?? product.brand;
+    product.totalStock = totalStock ?? product.totalStock;
+    product.image = image ?? product.image;
+    product.isFeature = isFeature !== undefined ? isFeature : product.isFeature;
+    product.isBestSeller =
+      isBestSeller !== undefined ? isBestSeller : product.isBestSeller;
+    product.isTrending =
+      isTrending !== undefined ? isTrending : product.isTrending;
+
+    // Save updated product
     await product.save();
 
     return sendResponse(
@@ -254,7 +295,7 @@ export const handleUpdateProducts = async (req, res) => {
       product
     );
   } catch (error) {
-    console.error("Error in handleUpdateProducts:", error.message);
+    console.error("Error in handleUpdateProducts:", error);
     return sendResponse(
       res,
       500,
@@ -294,13 +335,13 @@ export const handleDeleteProducts = async (req, res) => {
       );
     }
 
-    // Allow admins to delete any product
+    // Admins can delete any product
     if (req.role === "admin") {
       await Product.findByIdAndDelete(productId);
       return sendResponse(res, 200, true, "Product deleted successfully!");
     }
 
-    // Allow sellers to delete only their own products
+    // Sellers can delete only their own products
     if (req.role === "seller" && product.addedBy.id.toString() !== req.userId) {
       return sendResponse(
         res,
@@ -314,7 +355,7 @@ export const handleDeleteProducts = async (req, res) => {
     await Product.findByIdAndDelete(productId);
     return sendResponse(res, 200, true, "Product deleted successfully!");
   } catch (error) {
-    console.error("Error in handleDeleteProducts:", error.message);
+    console.error("Error in handleDeleteProducts:", error);
     return sendResponse(
       res,
       500,
@@ -326,36 +367,30 @@ export const handleDeleteProducts = async (req, res) => {
 
 export const handleGetSellerProducts = async (req, res) => {
   try {
-    const { sellerId } = req.params; // Get seller ID from the request params (URL)
-
-    // If the requester is a seller, they should only access their own products
-    if (req.role === "seller" && req.userId !== sellerId) {
+    // Ensure the user is authenticated and has the right role
+    if (!req.userId || req.role !== "seller") {
       return sendResponse(
         res,
         403,
         false,
-        "Unauthorized! You can only view your own products."
+        "Unauthorized! Only sellers and admins can view seller products."
       );
     }
 
-    // Ensure the user is a seller or an admin
-    if (!req.userId || (req.role !== "seller" && req.role !== "admin")) {
-      return sendResponse(
-        res,
-        403,
-        false,
-        "Unauthorized! Only sellers and Admins can view seller products."
-      );
-    }
+    // If the user is a seller, they should only fetch their own products
+    const sellerId = req.role === "seller" ? req.userId : null;
 
-    // Fetch products of the specific seller
-    const products = await Product.find({ "addedBy.id": sellerId });
+    // Construct query: If admin, fetch all products; if seller, fetch only theirs
+    const query = sellerId ? { "addedBy.id": sellerId } : {};
+
+    // Fetch products
+    const products = await Product.find(query).lean();
 
     return sendResponse(
       res,
       200,
       true,
-      "Seller's products retrieved successfully!",
+      "Products retrieved successfully!",
       products
     );
   } catch (error) {
@@ -372,13 +407,17 @@ export const handleGetSellerProducts = async (req, res) => {
 export const handleGetProductDetialsById = async (req, res) => {
   try {
     const { productId } = req.params;
-    if (!productId) {
-      return sendResponse(res, 400, false, "Product ID is required!");
+
+    // Validate if productId is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return sendResponse(res, 400, false, "Invalid product ID!");
     }
+
     const product = await Product.findById(productId);
     if (!product) {
       return sendResponse(res, 404, false, "Product not found!");
     }
+
     return sendResponse(
       res,
       200,
@@ -393,6 +432,82 @@ export const handleGetProductDetialsById = async (req, res) => {
       500,
       false,
       "Server error while fetching product details!"
+    );
+  }
+};
+
+export const handleGetFeaturedProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ isFeature: true })
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .limit(4) // Get only the latest 4
+      .lean();
+
+    // console.log("isFeature", products);
+
+    return sendResponse(
+      res,
+      200,
+      true,
+      "Featured products retrieved successfully!",
+      products
+    );
+  } catch (error) {
+    console.error("Error fetching featured products:", error.message);
+    return sendResponse(
+      res,
+      500,
+      false,
+      "Server error while fetching featured products!"
+    );
+  }
+};
+
+export const handleGetBestSellerProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ isBestSeller: true })
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .limit(4) // Get only the latest 4
+      .lean();
+          // console.log("handleGetBestSellerProducts", products);
+    return sendResponse(
+      res,
+      200,
+      true,
+      "Best-selling products retrieved successfully!",
+      products
+    );
+  } catch (error) {
+    console.error("Error fetching best-selling products:", error.message);
+    return sendResponse(
+      res,
+      500,
+      false,
+      "Server error while fetching best-selling products!"
+    );
+  }
+};
+
+export const handleGetTrendingProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ isTrending: true })
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .limit(4) // Get only the latest 4
+      .lean();
+    return sendResponse(
+      res,
+      200,
+      true,
+      "Trending products retrieved successfully!",
+      products
+    );
+  } catch (error) {
+    console.error("Error fetching trending products:", error.message);
+    return sendResponse(
+      res,
+      500,
+      false,
+      "Server error while fetching trending products!"
     );
   }
 };

@@ -40,13 +40,13 @@ router.post("/product/add", verifyToken, handleAddProducts);
 router.get("/products", handleGetProducts);
 
 // ✅ Get seller's products (Only the seller's own products)
-router.get("/product/seller", verifyToken, handleGetSellerProducts);
+router.get("/product/all-products", verifyToken, handleGetSellerProducts);
 
 // ✅ Update a product (Only sellers can update their own products)
-router.put("/product/seller/:productId", verifyToken, handleUpdateProducts);
+router.put("/product/edit/:productId", verifyToken, handleUpdateProducts);
 
 // ✅ Delete a product (Only sellers can delete their own products)
-router.delete("/product/seller/:productId", verifyToken, handleDeleteProducts);
+router.delete("/product/delete/:productId", verifyToken, handleDeleteProducts);
 
 // router.post("")
 

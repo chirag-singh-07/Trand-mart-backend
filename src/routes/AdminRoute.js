@@ -11,8 +11,11 @@ import { upload } from "../config/cloundinary.js";
 import {
   handleAddProducts,
   handleDeleteProducts,
+  handleGetBestSellerProducts,
+  handleGetFeaturedProducts,
   handleGetProductDetialsById,
   handleGetProducts,
+  handleGetTrendingProducts,
   handleImageUpload,
   handleUpdateProducts,
 } from "../controllers/ProductController.js";
@@ -35,5 +38,8 @@ router.put("/product/edit/:productId", verifyToken, handleUpdateProducts);
 router.delete("/product/delete/:productId", verifyToken, handleDeleteProducts);
 router.get("/product/all-products", verifyToken, handleGetProducts);
 router.get("/product/:productId", handleGetProductDetialsById);
+router.get("/product/feature-products", handleGetFeaturedProducts);
+router.get("/product/trending-products", handleGetTrendingProducts);
+router.get("/product/best-sellers", handleGetBestSellerProducts);
 
 export default router;
